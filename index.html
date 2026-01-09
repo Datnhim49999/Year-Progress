@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Time Machine OS v4</title>
+    <title>Year Progress</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
@@ -13,143 +13,180 @@
         }
         body {
             background: var(--bg); color: var(--text);
-            font-family: 'Segoe UI', sans-serif; margin: 0;
-            display: flex; justify-content: center; align-items: center;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            margin: 0; display: flex; justify-content: center; align-items: center;
             height: 100vh; overflow: hidden; transition: 0.5s;
         }
 
-        /* --- UI CHÍNH --- */
-        .main-container { text-align: center; width: 95%; max-width: 800px; }
-        #percent { font-size: 3.5rem; font-weight: 800; margin: 0; font-family: monospace; color: var(--primary); }
-        .year-display { font-size: 8rem; font-weight: 900; color: var(--gold); margin: -10px 0; }
+        .main-container { text-align: center; width: 90%; max-width: 600px; }
+        #percent { font-size: clamp(2.5rem, 8vw, 3.5rem); font-weight: 800; color: var(--primary); font-family: monospace; }
+        .year-display { font-size: clamp(5rem, 15vw, 8.5rem); font-weight: 900; color: var(--gold); margin: -10px 0; letter-spacing: -3px; }
 
-        /* THANH TIẾN TRÌNH */
-        .progress-wrapper { position: relative; margin: 40px 0; }
+        /* PROGRESS BAR */
+        .progress-wrapper { position: relative; margin: 30px 0; }
         .progress-bar {
-            height: 26px; background: #1e293b; border-radius: 13px;
+            height: 24px; background: #1e293b; border-radius: 12px;
             overflow: hidden; border: 1px solid var(--border); position: relative;
         }
-        #fill {
-            height: 100%; width: 0%; background: linear-gradient(90deg, #16a34a, #4ade80);
-            box-shadow: 0 0 20px rgba(34, 197, 94, 0.4); position: relative;
-        }
-        .goal-marker {
-            position: absolute; top: 0; bottom: 0; width: 4px;
-            z-index: 10; cursor: help; border-radius: 2px;
-        }
+        #fill { height: 100%; width: 0%; background: linear-gradient(90deg, #16a34a, #4ade80); transition: 0.4s; }
+        .goal-marker { position: absolute; top: 0; bottom: 0; width: 4px; z-index: 10; border-radius: 2px; }
 
-        /* ACTIONS */
-        .actions { display: flex; gap: 15px; justify-content: center; margin-top: 20px; }
+        /* FIX NÚT BẤM - Đảm bảo hiển thị đúng */
+        .actions { display: flex; gap: 12px; justify-content: center; margin-top: 25px; flex-wrap: wrap; }
         .btn {
             background: var(--card); border: 1px solid var(--border); color: white;
-            padding: 12px 20px; border-radius: 8px; cursor: pointer; transition: 0.3s;
+            padding: 12px 20px; border-radius: 10px; cursor: pointer; transition: 0.3s;
+            font-weight: 600; font-size: 0.95rem;
+            /* Căn giữa tuyệt đối */
+            display: inline-flex; align-items: center; justify-content: center; 
+            gap: 10px; min-width: 160px; height: 48px;
         }
-        .btn:hover { border-color: var(--primary); transform: translateY(-2px); }
+        .btn i { font-size: 1.1rem; flex-shrink: 0; }
+        .btn:hover { border-color: var(--primary); transform: translateY(-2px); background: #1f273d; }
 
-        /* MODAL SYSTEM */
+        /* LANGUAGE & SETTINGS */
+        .top-nav { position: absolute; top: 20px; left: 20px; right: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .lang-switcher { display: flex; gap: 6px; }
+        .lang-btn { background: var(--card); border: 1px solid var(--border); color: white; padding: 5px 10px; border-radius: 6px; cursor: pointer; font-size: 0.75rem; }
+        .lang-btn.active { border-color: var(--primary); color: var(--primary); }
+        .settings-trigger { font-size: 1.6rem; cursor: pointer; color: #64748b; transition: 0.3s; }
+
+        /* MODAL */
         .overlay {
             position: fixed; inset: 0; background: rgba(0,0,0,0.85);
             display: none; justify-content: center; align-items: center; z-index: 100;
-            backdrop-filter: blur(8px);
+            backdrop-filter: blur(8px); padding: 20px;
         }
         .modal {
             background: var(--card); border: 1px solid var(--border);
-            padding: 25px; border-radius: 20px; width: 90%; max-width: 500px;
-            max-height: 85vh; overflow-y: auto; position: relative;
+            padding: 25px; border-radius: 20px; width: 100%; max-width: 450px;
+            max-height: 90vh; overflow-y: auto;
         }
-        .tab-header { display: flex; gap: 15px; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
-        .tab-link { padding: 10px; cursor: pointer; opacity: 0.5; font-weight: bold; }
-        .tab-link.active { opacity: 1; border-bottom: 2px solid var(--primary); color: var(--primary); }
-        
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
 
-        /* INPUTS */
-        .input-group { margin-bottom: 15px; text-align: left; }
-        label { display: block; margin-bottom: 5px; font-size: 0.9rem; color: #94a3b8; }
-        input[type="text"], input[type="email"], input[type="date"], textarea, select {
-            width: 100%; padding: 12px; background: #0b0f1a; 
-            border: 1px solid var(--border); color: white; border-radius: 8px; box-sizing: border-box;
+        .input-group { margin-bottom: 18px; text-align: left; }
+        label { display: block; margin-bottom: 6px; font-size: 0.85rem; color: #94a3b8; }
+        input, select, textarea {
+            width: 100%; padding: 12px; background: #0b0f1a; border: 1px solid var(--border);
+            color: white; border-radius: 8px; box-sizing: border-box; font-size: 1rem;
         }
-        input[type="color"] { height: 40px; width: 100%; cursor: pointer; background: none; border: 1px solid var(--border); border-radius: 8px; }
 
-        .setting-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #2d3748; }
-        
-        #countdown-text { margin-top: 15px; font-family: monospace; font-size: 1.2rem; color: #94a3b8; display: none; }
-        
-        .goal-card { background: #0b0f1a; padding: 12px; border-radius: 8px; margin-bottom: 10px; display: flex; justify-content: space-between; }
+        /* FIX COLOR PICKER DISPLAY */
+        .color-row { display: flex; align-items: center; gap: 12px; background: #0b0f1a; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border); }
+        input[type="color"] { width: 35px; height: 35px; border: none; background: none; cursor: pointer; padding: 0; }
+
+        .setting-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); }
+        #countdown-text { margin-top: 15px; font-family: monospace; font-size: 1.2rem; color: #64748b; display: none; }
+        .goal-card { background: #0b0f1a; padding: 12px; border-radius: 10px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid var(--primary); }
     </style>
 </head>
 <body>
 
-    <i class="fas fa-cog" style="position: absolute; top:25px; right:25px; font-size:1.8rem; cursor:pointer;" onclick="openModal('modal-settings')"></i>
+    <div class="top-nav">
+        <div class="lang-switcher">
+            <button class="lang-btn active" id="btn-en" onclick="setLanguage('en')">EN</button>
+            <button class="lang-btn" id="btn-vi" onclick="setLanguage('vi')">VI</button>
+        </div>
+        <i class="fas fa-cog settings-trigger" onclick="openModal('modal-settings')"></i>
+    </div>
 
     <div class="main-container">
         <h1 id="percent">0.00%</h1>
-        <div id="countdown-text">T-Minus: 00d 00:00:00</div>
-        
+        <div id="countdown-text">00d 00:00:00</div>
         <div class="progress-wrapper">
             <div class="progress-bar"><div id="fill"></div></div>
             <div id="markers-container"></div>
         </div>
-        
         <div class="year-display" id="year">2026</div>
-
         <div class="actions">
-            <button class="btn" onclick="openModal('modal-goals')"><i class="fas fa-tasks"></i> Mục tiêu</button>
-            <button class="btn" onclick="openModal('modal-future')"><i class="fas fa-paper-plane"></i> Thư 2050</button>
+            <button class="btn" onclick="openModal('modal-goals')">
+                <i class="fas fa-bullseye"></i> <span data-key="btn-goals">Goals</span>
+            </button>
+            <button class="btn" onclick="openModal('modal-future')">
+                <i class="fas fa-paper-plane"></i> <span data-key="btn-future">Future Message</span>
+            </button>
         </div>
     </div>
 
     <div id="modal-goals" class="overlay">
         <div class="modal">
-            <div class="tab-header">
-                <div class="tab-link active" onclick="switchTab(this, 'create-goal')">Tạo Mới</div>
-                <div class="tab-link" onclick="switchTab(this, 'manage-goal')">Danh Sách</div>
+            <h3 data-key="goal-title">Goal Tracker</h3>
+            <div class="input-group">
+                <label data-key="label-title">Goal Name</label>
+                <input type="text" id="g-title" placeholder="...">
             </div>
-            <div id="create-goal" class="tab-content active">
-                <div class="input-group"><label>Tiêu đề</label><input type="text" id="g-title" placeholder="Học xong tiếng Anh..."></div>
-                <div class="input-group"><label>Ngày hoàn thành</label><input type="date" id="g-date"></div>
-                <div class="input-group"><label>Màu đánh dấu</label><input type="color" id="g-color" value="#22c55e"></div>
-                <button class="btn" style="width:100%; background: var(--primary)" onclick="addGoal()">Lưu mục tiêu</button>
+            <div class="input-group">
+                <label data-key="label-date">Date</label>
+                <input type="date" id="g-date">
             </div>
-            <div id="manage-goal" class="tab-content">
-                <div id="goal-list"></div>
+            <div class="input-group">
+                <label data-key="label-color">Marker Color</label>
+                <div class="color-row">
+                    <input type="color" id="g-color" value="#22c55e">
+                    <span style="font-size: 0.8rem; color: #64748b">Pick a color</span>
+                </div>
             </div>
-            <button class="btn" style="margin-top:20px; width:100%" onclick="closeAll()">Đóng</button>
-        </div>
-    </div>
-
-    <div id="modal-future" class="overlay">
-        <div class="modal">
-            <h3>Gửi thư cho bản thân</h3>
-            <div class="input-group"><label>Gmail nhận thư</label><input type="email" id="f-email" placeholder="name@gmail.com"></div>
-            <div class="input-group"><label>Năm muốn nhận</label><select id="f-year"></select></div>
-            <div class="input-group"><label>Lời nhắn</label><textarea id="f-msg" rows="4" placeholder="Gửi tôi của tương lai..."></textarea></div>
-            <button class="btn" style="width:100%; background: var(--gold)" onclick="sendFuture()">Ghi nhớ vào dòng thời gian</button>
-            <button class="btn" style="margin-top:10px; width:100%" onclick="closeAll()">Hủy</button>
+            <button class="btn" style="width:100%; background: var(--primary)" onclick="addGoal()" data-key="btn-save">Save Goal</button>
+            <div id="goal-list" style="margin-top: 15px;"></div>
+            <button class="btn" style="margin-top:15px; width:100%; background:transparent" onclick="closeAll()" data-key="btn-close">Close</button>
         </div>
     </div>
 
     <div id="modal-settings" class="overlay">
         <div class="modal">
-            <h3>Cài đặt hệ thống</h3>
-            <div class="setting-row"><span>Hiện đếm ngược</span><input type="checkbox" id="set-cd" onchange="toggleCD()"></div>
-            <div class="setting-row"><span>Chi tiết % (0.0000)</span><input type="checkbox" id="set-detail"></div>
-            <div class="setting-row"><span>Màu nền</span><input type="color" id="set-bg" oninput="changeBG(this.value)"></div>
-            <button class="btn" style="margin-top:20px; width:100%" onclick="closeAll()">Lưu & Đóng</button>
+            <h3 data-key="settings-title">Settings</h3>
+            <div class="setting-row"><span data-key="set-countdown">Countdown</span><input type="checkbox" id="set-cd" onchange="toggleCD()"></div>
+            <div class="setting-row"><span data-key="set-precision">Detailed %</span><input type="checkbox" id="set-detail"></div>
+            <div class="setting-row">
+                <span data-key="set-bg">Theme Color</span>
+                <input type="color" id="set-bg" value="#0b0f1a" oninput="changeBG(this.value)">
+            </div>
+            <button class="btn" style="margin-top:20px; width:100%" onclick="closeAll()" data-key="btn-close">Close</button>
+        </div>
+    </div>
+
+    <div id="modal-future" class="overlay">
+        <div class="modal">
+            <h3 data-key="future-title">Message to Future</h3>
+            <div class="input-group"><label data-key="label-email">Email</label><input type="email" id="f-email" placeholder="email@example.com"></div>
+            <div class="input-group"><label data-key="label-year">Deliver Year</label><select id="f-year"></select></div>
+            <div class="input-group"><label data-key="label-msg">Message</label><textarea id="f-msg" rows="4"></textarea></div>
+            <button class="btn" style="width:100%; background: var(--gold); color:#000" onclick="sendFuture()" data-key="btn-seal">Seal Message</button>
+            <button class="btn" style="margin-top:10px; width:100%; border:none;" onclick="closeAll()" data-key="btn-cancel">Cancel</button>
         </div>
     </div>
 
     <script>
+        const translations = {
+            en: {
+                "btn-goals": "Goals", "btn-future": "Future Mail", "goal-title": "Goal Tracker",
+                "label-title": "Goal Name", "label-date": "Deadline", "label-color": "Marker Color",
+                "btn-save": "Save Goal", "btn-close": "Close", "future-title": "Message to Future",
+                "label-email": "Your Email", "label-year": "Target Year", "label-msg": "Message",
+                "btn-seal": "Seal Message", "btn-cancel": "Cancel", "settings-title": "Settings",
+                "set-countdown": "Countdown", "set-precision": "Detailed %", "set-bg": "Theme Color"
+            },
+            vi: {
+                "btn-goals": "Mục Tiêu", "btn-future": "Thư Tương Lai", "goal-title": "Theo Dõi Mục Tiêu",
+                "label-title": "Tên Mục Tiêu", "label-date": "Ngày Hạn", "label-color": "Màu Đánh Dấu",
+                "btn-save": "Lưu Mục Tiêu", "btn-close": "Đóng", "future-title": "Lời Nhắn Tương Lai",
+                "label-email": "Email Nhận", "label-year": "Năm Nhận", "label-msg": "Nội Dung",
+                "btn-seal": "Gửi Thư", "btn-cancel": "Hủy", "settings-title": "Cài Đặt",
+                "set-countdown": "Đếm Ngược", "set-precision": "Chi Tiết %", "set-bg": "Màu Nền"
+            }
+        };
+
+        let currentLang = localStorage.getItem('lang') || 'en';
         let goals = JSON.parse(localStorage.getItem('goals')) || [];
 
-        // Khởi tạo danh sách năm cho thư tương lai (2027 - 2050)
-        const selectYear = document.getElementById('f-year');
-        for(let i=2027; i<=2050; i++) {
-            let opt = document.createElement('option');
-            opt.value = i; opt.innerText = "Năm " + i;
-            selectYear.appendChild(opt);
+        function setLanguage(lang) {
+            currentLang = lang;
+            localStorage.setItem('lang', lang);
+            document.querySelectorAll('[data-key]').forEach(el => {
+                el.innerText = translations[lang][el.getAttribute('data-key')];
+            });
+            document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+            document.getElementById('btn-vi').classList.toggle('active', lang === 'vi');
+            renderGoalList();
         }
 
         function update() {
@@ -157,52 +194,44 @@
             const start = new Date(now.getFullYear(), 0, 1);
             const end = new Date(now.getFullYear() + 1, 0, 1);
             const p = ((now - start) / (end - start)) * 100;
-            
-            // Cập nhật UI
             document.getElementById('fill').style.width = p + "%";
-            document.getElementById('percent').innerText = document.getElementById('set-detail').checked ? p.toFixed(6) + "%" : p.toFixed(2) + "%";
+            document.getElementById('percent').innerText = p.toFixed(document.getElementById('set-detail').checked ? 6 : 2) + "%";
             document.getElementById('year').innerText = now.getFullYear();
 
-            // Đếm ngược
             if(document.getElementById('set-cd').checked) {
                 const diff = end - now;
                 const d = Math.floor(diff/86400000);
-                const h = Math.floor((diff%86400000)/3600000);
-                const m = Math.floor((diff%3600000)/60000);
-                const s = Math.floor((diff%60000)/1000);
+                const h = Math.floor((diff%86400000)/3600000).toString().padStart(2,'0');
+                const m = Math.floor((diff%3600000)/60000).toString().padStart(2,'0');
+                const s = Math.floor((diff%60000)/1000).toString().padStart(2,'0');
                 document.getElementById('countdown-text').innerText = `T-Minus: ${d}d ${h}:${m}:${s}`;
             }
-
-            if (p >= 99.999) confetti();
             renderMarkers();
+        }
+
+        const fYear = document.getElementById('f-year');
+        for(let i=2027; i<=2050; i++) {
+            let opt = document.createElement('option'); opt.value = i; opt.innerText = i; fYear.appendChild(opt);
         }
 
         function openModal(id) { document.getElementById(id).style.display = 'flex'; }
         function closeAll() { document.querySelectorAll('.overlay').forEach(el => el.style.display = 'none'); }
-        function switchTab(el, tabId) {
-            document.querySelectorAll('.tab-link').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            el.classList.add('active');
-            document.getElementById(tabId).classList.add('active');
-            if(tabId === 'manage-goal') renderGoalList();
-        }
-
+        
         function addGoal() {
             const title = document.getElementById('g-title').value;
             const date = document.getElementById('g-date').value;
-            if(!title || !date) return alert("Vui lòng nhập đủ thông tin!");
+            if(!title || !date) return;
             goals.push({ id: Date.now(), title, date, color: document.getElementById('g-color').value });
             localStorage.setItem('goals', JSON.stringify(goals));
+            renderGoalList();
             closeAll();
         }
 
         function renderGoalList() {
             const list = document.getElementById('goal-list');
             list.innerHTML = goals.map(g => `
-                <div class="goal-card">
-                    <div style="border-left: 4px solid ${g.color}; padding-left: 10px;">
-                        <b>${g.title}</b><br><small>${g.date}</small>
-                    </div>
+                <div class="goal-card" style="border-left-color: ${g.color}">
+                    <div><b>${g.title}</b><br><small>${g.date}</small></div>
                     <i class="fas fa-trash" onclick="deleteGoal(${g.id})" style="color:#ef4444; cursor:pointer"></i>
                 </div>
             `).join('');
@@ -224,20 +253,17 @@
                     const pos = ((gDate - new Date(year, 0, 1)) / (new Date(year+1, 0, 1) - new Date(year, 0, 1))) * 100;
                     const marker = document.createElement('div');
                     marker.className = 'goal-marker';
-                    marker.style.left = pos + "%";
-                    marker.style.background = g.color;
-                    marker.title = g.title;
-                    container.appendChild(marker);
+                    marker.style.left = pos + "%"; marker.style.background = g.color; container.appendChild(marker);
                 }
             });
         }
 
         function toggleCD() { document.getElementById('countdown-text').style.display = document.getElementById('set-cd').checked ? 'block' : 'none'; }
         function changeBG(val) { document.body.style.background = val; }
-        function sendFuture() { alert("Đã mã hóa thư! Hệ thống sẽ tự động nhắc nhở bạn vào năm " + document.getElementById('f-year').value); closeAll(); }
+        function sendFuture() { alert("Sealed!"); closeAll(); }
 
         setInterval(update, 100);
-        update();
+        setLanguage(currentLang);
     </script>
 </body>
 </html>
